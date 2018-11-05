@@ -149,5 +149,6 @@ sosCommandInitialize(lldb::SBDebugger debugger)
     interpreter.AddCommand("histobjfind", new sosCommand("HistObjFind"), "Displays all the log entries that reference an object at the specified address.");
     interpreter.AddCommand("histroot", new sosCommand("HistRoot"), "Displays information related to both promotions and relocations of the specified root.");
     interpreter.AddCommand("soshelp", new sosCommand("Help"), "Displays all available commands when no parameter is specified, or displays detailed help information about the specified command. soshelp <command>");
+    interpreter.AddCommand("syncblk", new sosCommand("SyncBlk"), "SyncBlk experiment");
     return true;
 }

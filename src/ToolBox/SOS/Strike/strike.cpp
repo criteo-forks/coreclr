@@ -4781,6 +4781,7 @@ DECLARE_API(GCHeapStat)
 #endif // FEATURE_PAL
 }
 
+
 /**********************************************************************\
 * Routine Description:                                                 *
 *                                                                      *
