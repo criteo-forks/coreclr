@@ -4781,6 +4781,8 @@ DECLARE_API(GCHeapStat)
 #endif // FEATURE_PAL
 }
 
+#endif // FEATURE_PAL
+
 /**********************************************************************\
 * Routine Description:                                                 *
 *                                                                      *
@@ -4963,13 +4965,17 @@ DECLARE_API(SyncBlk)
     
     ExtOut("-----------------------------\n");
     ExtOut("Total           %d\n", dwCount);
+#ifdef FEATURE_COMINTEROP
     ExtOut("CCW             %d\n", CCWCount);
     ExtOut("RCW             %d\n", RCWCount);
     ExtOut("ComClassFactory %d\n", CFCount);
+#endif
     ExtOut("Free            %d\n", freeCount);
    
     return Status;
 }
+
+#ifndef FEATURE_PAL
 
 #ifdef FEATURE_COMINTEROP
 struct VisitRcwArgs
