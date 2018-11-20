@@ -156,6 +156,7 @@ namespace System.Diagnostics.Tracing
 
         internal protected  override void OnEventSourceCreated(EventSource eventSource)
         {
+			return;
             string eventSourceFilter = eventSourceNameFilter.Value;
             if (String.IsNullOrEmpty(eventSourceFilter) || (eventSource.Name.IndexOf(eventSourceFilter, StringComparison.OrdinalIgnoreCase) >= 0))
             {   
@@ -165,6 +166,7 @@ namespace System.Diagnostics.Tracing
 
         internal protected  override void OnEventWritten(EventWrittenEventArgs eventData)
         {
+			return;
             string eventFilter = eventSourceEventFilter.Value;
             if (String.IsNullOrEmpty(eventFilter) || (eventData.EventName.IndexOf(eventFilter, StringComparison.OrdinalIgnoreCase) >= 0))
             {
