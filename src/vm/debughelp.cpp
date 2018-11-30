@@ -1249,5 +1249,35 @@ void LogStackTrace()
 }
 #endif
 
+const wchar_t* SEPARATOR = W("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+void PrintStackTracewithHeader(wchar_t* wszHeader, bool sendToStdOut)
+{
+    CONTRACTL
+    {
+        DISABLED(NOTHROW);
+        DISABLED(GC_TRIGGERS);
+    }
+    CONTRACTL_END;
+
+
+    int toStdOut = 0;
+    if (sendToStdOut)
+    {
+        // traces will be sent to StdOut only
+        toStdOut = 1;
+        PrintToStdOutW(wszHeader);
+        PrintToStdOutW(SEPARATOR);
+    }
+    else
+    {
+        // traces will be sent to OutputDebugString only
+        WszOutputDebugString(wszHeader);
+        WszOutputDebugString(SEPARATOR);
+    }
+
+    PrintCallbackData cbd = { toStdOut, 0 };
+    GetThread()->StackWalkFrames(PrintStackTraceCallback, &cbd, ALLOW_ASYNC_STACK_WALK, 0);
+}
+
 #endif // #ifndef DACCESS_COMPILE
 #endif //_DEBUG
