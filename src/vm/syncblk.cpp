@@ -3035,10 +3035,32 @@ inline void LogContention()
     }
 #endif
 }
+
+void PrintStackTracewithHeader(wchar_t* wszHeader, bool sendToStdOut);
+inline void LogContentionWithCallStack(double duration, DWORD threadID)
+{
+    WRAPPER_NO_CONTRACT;
+
+    const int nLen = 64;
+    wchar_t* pBuffer = (wchar_t*)alloca(nLen * sizeof(wchar_t));
+    pBuffer[0] = W('\0');
+    pBuffer[nLen - 1] = W('\0');
+    _snwprintf_s(pBuffer, nLen - 1, _TRUNCATE, W("Contention duration for thread #%u = %.2fs\n"), threadID, duration);
+
+    BOOL sendToStdOut = TRUE;
+    PrintStackTracewithHeader(pBuffer, sendToStdOut);
+}
 #else
 #define LogContention()
+inline void LogContentionWithCallStack(double duration, DWORD threadID)
+{
+    WRAPPER_NO_CONTRACT;
+}
 #endif
 
+
+// TODO: read this value from an environment variable instead of this 1 seconds hardcoded value
+const double CLR_CONTENTION_DURATION_THRESHOLD = 1;
 BOOL AwareLock::EnterEpilogHelper(Thread* pCurThread, INT32 timeOut)
 {
     STATIC_CONTRACT_THROWS;
@@ -3057,6 +3079,9 @@ BOOL AwareLock::EnterEpilogHelper(Thread* pCurThread, INT32 timeOut)
     _ASSERTE(pCurThread->PreemptiveGCDisabled());
 
     COUNTER_ONLY(GetPerfCounters().m_LocksAndThreads.cContention++);
+
+    // measure contention duration if more than the threshold
+    clock_t start = clock();
 
     // Fire a contention start event for a managed contention
     FireEtwContentionStart_V1(ETW::ContentionLog::ContentionStructs::ManagedContention, GetClrInstanceId());
@@ -3189,6 +3214,14 @@ BOOL AwareLock::EnterEpilogHelper(Thread* pCurThread, INT32 timeOut)
     }
     GCPROTECT_END();
     DecrementTransientPrecious();
+
+    // dump call stack of the current thread if contention last more than a given threshold
+    clock_t duration = clock() - start;
+    double durationInSeconds = ((double)duration) / CLOCKS_PER_SEC;
+    if (durationInSeconds >= CLR_CONTENTION_DURATION_THRESHOLD)
+    {
+        LogContentionWithCallStack(durationInSeconds, pCurThread->m_ThreadId);
+    }
 
     // Fire a contention end event for a managed contention
     FireEtwContentionStop(ETW::ContentionLog::ContentionStructs::ManagedContention, GetClrInstanceId());
