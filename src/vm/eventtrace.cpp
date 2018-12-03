@@ -2878,8 +2878,8 @@ void ETW::TypeSystemLog::PostRegistrationInit()
 
     // Initialize our "current state" BOOLs that remember if low or high allocation
     // sampling is turned on
-    s_fHeapAllocLowEventEnabledNow = ETW_TRACING_CATEGORY_ENABLED(MICROSOFT_WINDOWS_DOTNETRUNTIME_PROVIDER_Context, TRACE_LEVEL_INFORMATION, CLR_GCHEAPALLOCLOW_KEYWORD);
-    s_fHeapAllocHighEventEnabledNow = ETW_TRACING_CATEGORY_ENABLED(MICROSOFT_WINDOWS_DOTNETRUNTIME_PROVIDER_Context, TRACE_LEVEL_INFORMATION, CLR_GCHEAPALLOCHIGH_KEYWORD);
+    s_fHeapAllocLowEventEnabledNow = FALSE; //ETW_TRACING_CATEGORY_ENABLED(MICROSOFT_WINDOWS_DOTNETRUNTIME_PROVIDER_Context, TRACE_LEVEL_INFORMATION, CLR_GCHEAPALLOCLOW_KEYWORD);
+    s_fHeapAllocHighEventEnabledNow = FALSE; //ETW_TRACING_CATEGORY_ENABLED(MICROSOFT_WINDOWS_DOTNETRUNTIME_PROVIDER_Context, TRACE_LEVEL_INFORMATION, CLR_GCHEAPALLOCHIGH_KEYWORD);
 
     // Snapshot the current state of the object allocated keyword (on startup), and rely
     // on this snapshot for the rest of the process run. Since these events require the
@@ -2937,8 +2937,8 @@ void ETW::TypeSystemLog::OnKeywordsChanged()
 
     // If the desired frequencey for the GCSampledObjectAllocation events has changed,
     // update our state.
-    s_fHeapAllocLowEventEnabledNow = ETW_TRACING_CATEGORY_ENABLED(MICROSOFT_WINDOWS_DOTNETRUNTIME_PROVIDER_Context, TRACE_LEVEL_INFORMATION, CLR_GCHEAPALLOCLOW_KEYWORD);
-    s_fHeapAllocHighEventEnabledNow = ETW_TRACING_CATEGORY_ENABLED(MICROSOFT_WINDOWS_DOTNETRUNTIME_PROVIDER_Context, TRACE_LEVEL_INFORMATION, CLR_GCHEAPALLOCHIGH_KEYWORD);
+    s_fHeapAllocLowEventEnabledNow = FALSE; //ETW_TRACING_CATEGORY_ENABLED(MICROSOFT_WINDOWS_DOTNETRUNTIME_PROVIDER_Context, TRACE_LEVEL_INFORMATION, CLR_GCHEAPALLOCLOW_KEYWORD);
+    s_fHeapAllocHighEventEnabledNow = FALSE; //ETW_TRACING_CATEGORY_ENABLED(MICROSOFT_WINDOWS_DOTNETRUNTIME_PROVIDER_Context, TRACE_LEVEL_INFORMATION, CLR_GCHEAPALLOCHIGH_KEYWORD);
 
     // FUTURE: Would be nice here to log an error event if (s_fHeapAllocLowEventEnabledNow ||
     // s_fHeapAllocHighEventEnabledNow), but !s_fHeapAllocEventEnabledOnStartup
