@@ -3062,12 +3062,12 @@ inline void LogContentionWithCallStack(double duration, DWORD threadID)
 inline double GetDurationInSeconds(FILETIME& start, FILETIME& end)
 {
     ULARGE_INTEGER uliStart;
-    uliStart.HighPart = start.dwHighDateTime;
-    uliStart.LowPart = start.dwLowDateTime;
+    uliStart.u.HighPart = start.dwHighDateTime;
+    uliStart.u.LowPart = start.dwLowDateTime;
 
     ULARGE_INTEGER uliEnd;
-    uliEnd.HighPart = end.dwHighDateTime;
-    uliEnd.LowPart = end.dwLowDateTime;
+    uliEnd.u.HighPart = end.dwHighDateTime;
+    uliEnd.u.LowPart = end.dwLowDateTime;
 
     double durationInSeconds = ((double)((uliEnd.QuadPart - uliStart.QuadPart))) / 10000.0;
     return durationInSeconds / 1000.0;
