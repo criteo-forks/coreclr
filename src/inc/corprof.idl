@@ -2426,6 +2426,17 @@ interface ICorProfilerCallback9 : ICorProfilerCallback8
     HRESULT DynamicMethodUnloaded([in] FunctionID functionId);
 }
 
+[
+    object,
+	uuid(3961f5d0-e98c-497a-8ce3-2a7121e3eae4),
+    pointer_default(unique),
+    local
+]
+interface ICorProfilerCallback10 : ICorProfilerCallback9
+{
+    HRESULT ContentionEnter();
+    HRESULT ContentionLeave();
+}
 
 /*
  * COR_PRF_CODEGEN_FLAGS controls various flags and hooks for a specific

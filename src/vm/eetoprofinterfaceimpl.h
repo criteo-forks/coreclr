@@ -57,6 +57,7 @@ public:
     BOOL IsCallback6Supported();
     BOOL IsCallback7Supported();
     BOOL IsCallback8Supported();
+    BOOL IsCallback10Supported();
 
     HRESULT SetEventMask(DWORD dwEventMask, DWORD dwEventMaskHigh);
 
@@ -149,6 +150,12 @@ public:
     HRESULT ThreadNameChanged(ThreadID managedThreadId,
                               ULONG cchName,
                               __in_ecount_opt(cchName) WCHAR name[]);
+
+    //
+    // Contention Events
+    //
+    HRESULT ContentionEnter();
+    HRESULT ContentionLeave();
 
     //
     // Startup/Shutdown Events
@@ -545,7 +552,7 @@ private:
 
     // Pointer to the profiler's implementation of the callback interface(s).
     // Profilers MUST support ICorProfilerCallback2.
-    // Profilers MAY optionally support ICorProfilerCallback3,4,5,6,7,8,9
+    // Profilers MAY optionally support ICorProfilerCallback3,4,5,6,7,8,9,10
     ICorProfilerCallback2 * m_pCallback2;
     ICorProfilerCallback3 * m_pCallback3;
     ICorProfilerCallback4 * m_pCallback4;
@@ -554,6 +561,7 @@ private:
     ICorProfilerCallback7 * m_pCallback7;
     ICorProfilerCallback8 * m_pCallback8;
     ICorProfilerCallback9 * m_pCallback9;
+    ICorProfilerCallback10 * m_pCallback10;
 
     HMODULE                 m_hmodProfilerDLL;
 

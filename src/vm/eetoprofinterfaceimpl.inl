@@ -71,6 +71,12 @@ inline BOOL EEToProfInterfaceImpl::IsCallback8Supported()
     return (m_pCallback8 != NULL);
 }
 
+inline BOOL EEToProfInterfaceImpl::IsCallback10Supported()
+{
+    LIMITED_METHOD_CONTRACT;
+    return (m_pCallback10 != NULL);
+}
+
 inline FunctionIDMapper * EEToProfInterfaceImpl::GetFunctionIDMapper()
 {
     LIMITED_METHOD_CONTRACT;

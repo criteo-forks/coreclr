@@ -416,6 +416,7 @@ EEToProfInterfaceImpl::EEToProfInterfaceImpl() :
     m_pCallback7(NULL),
     m_pCallback8(NULL),
     m_pCallback9(NULL),
+    m_pCallback10(NULL),
     m_hmodProfilerDLL(NULL),
     m_fLoadedViaAttach(FALSE),
     m_pProfToEE(NULL),
@@ -666,7 +667,49 @@ HRESULT EEToProfInterfaceImpl::CreateProfiler(
     m_hmodProfilerDLL = hmodProfilerDLL.Extract();
     hmodProfilerDLL = NULL;
 
-    // The profiler may optionally support ICorProfilerCallback3,4,5,6,7,8,9.  Let's check.
+    // The profiler may optionally support ICorProfilerCallback3,4,5,6,7,8,9,10.  Let's check.
+
+    ReleaseHolder<ICorProfilerCallback10> pCallback10;
+    hr = m_pCallback2->QueryInterface(
+        IID_ICorProfilerCallback10,
+        (LPVOID *)&pCallback10);
+    if (SUCCEEDED(hr) && (pCallback10 != NULL))
+    {
+        // Nifty.  Transfer ownership to this class
+        _ASSERTE(m_pCallback10 == NULL);
+        m_pCallback10 = pCallback10.Extract();
+        pCallback10 = NULL;
+
+        // And while we're at it, we must now also have an ICorProfilerCallback3,4,5,6,7,8,9
+        // due to inheritance relationship of the interfaces
+        _ASSERTE(m_pCallback9 == NULL);
+        m_pCallback9 = static_cast<ICorProfilerCallback9 *>(m_pCallback10);
+        m_pCallback9->AddRef();
+
+        _ASSERTE(m_pCallback8 == NULL);
+        m_pCallback8 = static_cast<ICorProfilerCallback8 *>(m_pCallback9);
+        m_pCallback8->AddRef();
+
+        _ASSERTE(m_pCallback7 == NULL);
+        m_pCallback7 = static_cast<ICorProfilerCallback7 *>(m_pCallback8);
+        m_pCallback7->AddRef();
+
+        _ASSERTE(m_pCallback6 == NULL);
+        m_pCallback6 = static_cast<ICorProfilerCallback6 *>(m_pCallback7);
+        m_pCallback6->AddRef();
+
+        _ASSERTE(m_pCallback5 == NULL);
+        m_pCallback5 = static_cast<ICorProfilerCallback5 *>(m_pCallback6);
+        m_pCallback5->AddRef();
+
+        _ASSERTE(m_pCallback4 == NULL);
+        m_pCallback4 = static_cast<ICorProfilerCallback4 *>(m_pCallback5);
+        m_pCallback4->AddRef();
+
+        _ASSERTE(m_pCallback3 == NULL);
+        m_pCallback3 = static_cast<ICorProfilerCallback3 *>(m_pCallback4);
+        m_pCallback3->AddRef();
+    }
 
     ReleaseHolder<ICorProfilerCallback9> pCallback9;
     hr = m_pCallback2->QueryInterface(
@@ -6394,5 +6437,69 @@ HRESULT EEToProfInterfaceImpl::GetAssemblyReferences(LPCWSTR wszAssemblyPath, IA
     return hr;
 }
 
+
+HRESULT EEToProfInterfaceImpl::ContentionEnter()
+{
+    CONTRACTL
+    {
+        // Yay!
+        NOTHROW;
+
+        // Yay!
+        GC_TRIGGERS;
+
+        // Yay!
+        MODE_PREEMPTIVE;
+
+        // Yay!
+        CAN_TAKE_LOCK;
+    }
+    CONTRACTL_END;
+
+    CLR_TO_PROFILER_ENTRYPOINT((LF_CORPROF,
+        LL_INFO10,
+        "**PROF: Notifying profiler that contention is beginning.\n"));
+    // Should only be called on profilers that support ICorProfilerCallback10
+    _ASSERTE(IsCallback10Supported());
+
+    {
+        // All callbacks are really NOTHROW, but that's enforced partially by the profiler,
+        // whose try/catch blocks aren't visible to the contract system
+        PERMANENT_CONTRACT_VIOLATION(ThrowsViolation, ReasonProfilerCallout);
+        return m_pCallback10->ContentionEnter();
+    }
+}
+
+HRESULT EEToProfInterfaceImpl::ContentionLeave()
+{
+    CONTRACTL
+    {
+        // Yay
+        NOTHROW;
+
+        // Yay
+        GC_TRIGGERS;
+
+        // Yay
+        MODE_PREEMPTIVE;
+
+        // Yay
+        CAN_TAKE_LOCK;
+    }
+    CONTRACTL_END;
+
+    CLR_TO_PROFILER_ENTRYPOINT((LF_CORPROF,
+        LL_INFO10,
+        "**PROF: Notifying profiler that contention is ending.\n"));
+    // Should only be called on profilers that support ICorProfilerCallback10
+    _ASSERTE(IsCallback10Supported());
+
+    {
+        // All callbacks are really NOTHROW, but that's enforced partially by the profiler,
+        // whose try/catch blocks aren't visible to the contract system
+        PERMANENT_CONTRACT_VIOLATION(ThrowsViolation, ReasonProfilerCallout);
+        return m_pCallback10->ContentionLeave();
+    }
+}
 
 #endif // PROFILING_SUPPORTED

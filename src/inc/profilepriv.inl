@@ -767,6 +767,13 @@ inline BOOL CORProfilerDisableTieredCompilation()
          ((&g_profControlBlock)->dwEventMaskHigh & COR_PRF_HIGH_DISABLE_TIERED_COMPILATION));
 }
 
+inline BOOL CORProfilerTrackContention()
+{
+    LIMITED_METHOD_DAC_CONTRACT;
+
+    return CORProfilerPresent() && (&g_profControlBlock)->pProfInterface->IsCallback4Supported();
+}
+
 #if defined(PROFILING_SUPPORTED) && !defined(CROSSGEN_COMPILE)
 
 #if defined(FEATURE_PROFAPI_ATTACH_DETACH)

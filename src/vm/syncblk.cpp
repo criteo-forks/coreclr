@@ -3058,6 +3058,12 @@ BOOL AwareLock::EnterEpilogHelper(Thread* pCurThread, INT32 timeOut)
 
     COUNTER_ONLY(GetPerfCounters().m_LocksAndThreads.cContention++);
 
+    {
+        BEGIN_PIN_PROFILER(CORProfilerTrackContention());
+        g_profControlBlock.pProfInterface->ContentionEnter();
+        END_PIN_PROFILER();
+    }
+
     // Fire a contention start event for a managed contention
     FireEtwContentionStart_V1(ETW::ContentionLog::ContentionStructs::ManagedContention, GetClrInstanceId());
 
@@ -3192,6 +3198,12 @@ BOOL AwareLock::EnterEpilogHelper(Thread* pCurThread, INT32 timeOut)
 
     // Fire a contention end event for a managed contention
     FireEtwContentionStop(ETW::ContentionLog::ContentionStructs::ManagedContention, GetClrInstanceId());
+
+    {
+        BEGIN_PIN_PROFILER(CORProfilerTrackContention());
+        g_profControlBlock.pProfInterface->ContentionLeave();
+        END_PIN_PROFILER();
+    }
 
     if (ret == WAIT_TIMEOUT)
     {
