@@ -3233,7 +3233,7 @@ BOOL AwareLock::EnterEpilogHelper(Thread* pCurThread, INT32 timeOut)
     // dump call stack of the current thread if contention last too long
     FILETIME endTime;
     GetSystemTimeAsFileTime(&endTime);
-    double durationInSeconds = GetDurationInSeconds(endTime, startTime);
+    double durationInSeconds = GetDurationInSeconds(startTime, endTime);
     if (durationInSeconds >= CLR_CONTENTION_DURATION_THRESHOLD)
     {
         LogContentionWithCallStack(durationInSeconds, pCurThread->m_ThreadId);
