@@ -3051,10 +3051,27 @@ inline void LogContentionWithCallStack(double duration, DWORD threadID)
     PrintStackTracewithHeader(pBuffer, sendToStdOut);
 }
 #else
+// the idea is to be able in RELEASE to set a breakpoint on this symbol
+// and break in the debugger to look at the callstack when the contention 
+// threshold is detected
+#if defined(_MSC_VER)
+#define NEVER_INLINE  __declspec(noinline)
+#else //  defined(_MSC_VER)
+// Other compilers (including GCC)
+#define NEVER_INLINE __attribute__((noinline))
+#endif  //  !defined(_MSC_VER)
+
 #define LogContention()
-inline void LogContentionWithCallStack(double duration, DWORD threadID)
+NEVER_INLINE void LogContentionWithCallStack(double duration, DWORD threadID)
 {
     WRAPPER_NO_CONTRACT;
+
+    const int nLen = 64;
+    wchar_t* pBuffer = (wchar_t*)alloca(nLen * sizeof(wchar_t));
+    pBuffer[0] = W('\0');
+    pBuffer[nLen - 1] = W('\0');
+    _snwprintf_s(pBuffer, nLen - 1, _TRUNCATE, W("Contention duration for thread #%u = %.2fs\n"), threadID, duration);
+    OutputDebugStringW(pBuffer);
 }
 #endif
 
