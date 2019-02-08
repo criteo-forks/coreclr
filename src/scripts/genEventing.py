@@ -11,6 +11,7 @@
 
 # Python 2 compatibility
 from __future__ import print_function
+from collections import defaultdict
 
 import os
 import xml.dom.minidom as DOM
@@ -721,6 +722,7 @@ def generateEtmDummyHeader(sClrEtwAllMan,clretwdummy):
             #pal: create etmdummy.h
             Clretwdummy.write(generateclrEtwDummy(eventNodes, allTemplates) + "\n")
 
+
 def generatePlatformIndependentFiles(sClrEtwAllMan, incDir, etmDummyFile, extern, write_xplatheader):
 
     generateEtmDummyHeader(sClrEtwAllMan,etmDummyFile)
@@ -740,8 +742,9 @@ def generatePlatformIndependentFiles(sClrEtwAllMan, incDir, etmDummyFile, extern
         Clrallevents.write("""
 #include "clrxplatevents.h"
 #include "clreventpipewriteevents.h"
-
 """)
+        allKeywordNodes = set()
+
         for providerNode in tree.getElementsByTagName('provider'):
             templateNodes = providerNode.getElementsByTagName('template')
             allTemplates  = parseTemplateNodes(templateNodes)
@@ -749,6 +752,52 @@ def generatePlatformIndependentFiles(sClrEtwAllMan, incDir, etmDummyFile, extern
 
             #vm header:
             Clrallevents.write(generateClrallEvents(eventNodes, allTemplates) + "\n")
+
+        allKeywordNodes = tree.getElementsByTagName('keyword')
+       
+        keywordsNameToSymbol = defaultdict(list) 
+        for keywordNode in allKeywordNodes:
+            keywordName = keywordNode.getAttribute('name')
+            keywordSymbol = keywordNode.getAttribute('symbol')
+            keywordsNameToSymbol[keywordSymbol].append(keywordName)
+
+    clrkeywords = os.path.join(incDir, "clreventkeywords.h")
+    with open_for_update(clrkeywords) as Clrkeywords:
+        Clrkeywords.write("#ifndef CLREVENTSKEYWORDS_H\n")
+        Clrkeywords.write("#define CLREVENTSKEYWORDS_H\n")
+        Clrkeywords.write("\n")
+        i = 0
+        j = 0
+        keywordsArray = []
+        alreadySeenKeywordSymbol = set()
+        for keywordSymbol, keywordNames in keywordsNameToSymbol.items():
+            if keywordSymbol == "CLR_GCHEAPCOLLECT_KEYWORD":
+                continue
+
+            if (1 << i) == 0x800000:
+                keywordsArray.append("W(\"" + keywordsNameToSymbol["CLR_GCHEAPCOLLECT_KEYWORD"][0] + "\")")
+                i += 1
+                j += 1
+            else:    
+                mask = "("
+                for keywordName in keywordNames:
+                   mask += "1ULL << " + str(i)
+                   if keywordName != keywordNames[-1]:
+                       mask += " | "
+ 
+                   keywordsArray.append("W(\"" + keywordName + "\")")
+                   j += 1
+                   i += 1
+
+                mask += ")"
+
+                Clrkeywords.write("#define " + keywordSymbol + " " + mask +"\n")
+
+        Clrkeywords.write("#define CLR_KEYWORDS_COUNT " + str(j) + "\n")
+        Clrkeywords.write("__declspec(selectany) const WCHAR*  ALL_CLR_KEYWORDS[CLR_KEYWORDS_COUNT] = {\n")
+        Clrkeywords.write(",\n".join(keywordsArray))
+        Clrkeywords.write("\n};\n")
+        Clrkeywords.write("#endif /* CLREVENTSKEYWORDS_H */\n");
 
 
     clreventpipewriteevents = os.path.join(incDir, "clreventpipewriteevents.h")
