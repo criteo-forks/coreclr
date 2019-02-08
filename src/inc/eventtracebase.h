@@ -101,9 +101,9 @@ enum EtwThreadFlags
 
 #define ETW_TRACING_INITIALIZED(RegHandle) (TRUE)
 #define ETW_EVENT_ENABLED(Context, EventDescriptor) (EventPipeHelper::Enabled() || XplatEventLogger::IsEventLoggingEnabled())
-#define ETW_CATEGORY_ENABLED(Context, Level, Keyword) (EventPipeHelper::Enabled() || XplatEventLogger::IsEventLoggingEnabled())
+#define ETW_CATEGORY_ENABLED(Context, Level, Keyword) ((EventPipeHelper::Enabled() || XplatEventLogger::IsEventLoggingEnabled()) && XplatEventLogger::IsKeywordEnabled(Keyword))
 #define ETW_TRACING_ENABLED(Context, EventDescriptor) (EventEnabled##EventDescriptor())
-#define ETW_TRACING_CATEGORY_ENABLED(Context, Level, Keyword) (EventPipeHelper::Enabled() || XplatEventLogger::IsEventLoggingEnabled())
+#define ETW_TRACING_CATEGORY_ENABLED(Context, Level, Keyword) ((EventPipeHelper::Enabled() || XplatEventLogger::IsEventLoggingEnabled()) && XplatEventLogger::IsKeywordEnabled(Keyword))
 #define ETW_PROVIDER_ENABLED(ProviderSymbol) (TRUE)
 #else //defined(FEATURE_PERFTRACING)
 #define ETW_INLINE  
@@ -112,9 +112,9 @@ enum EtwThreadFlags
 
 #define ETW_TRACING_INITIALIZED(RegHandle) (TRUE)
 #define ETW_EVENT_ENABLED(Context, EventDescriptor) (XplatEventLogger::IsEventLoggingEnabled())
-#define ETW_CATEGORY_ENABLED(Context, Level, Keyword) (XplatEventLogger::IsEventLoggingEnabled())
+#define ETW_CATEGORY_ENABLED(Context, Level, Keyword) (XplatEventLogger::IsEventLoggingEnabled() && XplatEventLogger::IsKeywordEnabled(Keyword))
 #define ETW_TRACING_ENABLED(Context, EventDescriptor) (EventEnabled##EventDescriptor())
-#define ETW_TRACING_CATEGORY_ENABLED(Context, Level, Keyword) (XplatEventLogger::IsEventLoggingEnabled())
+#define ETW_TRACING_CATEGORY_ENABLED(Context, Level, Keyword) (XplatEventLogger::IsEventLoggingEnabled() && XplatEventLogger::IsKeywordEnabled(Keyword))
 #define ETW_PROVIDER_ENABLED(ProviderSymbol) (TRUE)
 #endif // defined(FEATURE_PERFTRACING)
 #endif // !defined(FEATURE_PAL)
@@ -227,8 +227,12 @@ public:
 
 #if defined(FEATURE_EVENT_TRACE) || defined(FEATURE_EVENTSOURCE_XPLAT)
 
+#define KEYWORDZERO 0x0
+
 #include "clrconfig.h"
- class XplatEventLogger
+#include "clreventkeywords.h"
+
+class XplatEventLogger
 {
     public:
         inline static BOOL  IsEventLoggingEnabled()
@@ -236,6 +240,46 @@ public:
             static ConfigDWORD configEventLogging;
             return configEventLogging.val(CLRConfig::EXTERNAL_EnableEventLog);
         }
+
+        inline static BOOL IsKeywordEnabled(ULONGLONG keyword)
+        {
+            static ULONGLONG enabledKeywordsMask = BuildEnabledKeywordsBitmask();
+            return (enabledKeywordsMask & keyword) == keyword;
+        }
+
+ private:
+     static ULONGLONG  BuildEnabledKeywordsBitmask()
+     {
+         static WCHAR Delimiters[] = W(",");
+         static ConfigString configEventLogging;
+
+         LPWSTR enabledKeywords = NULL;
+         CLRConfig::GetConfigValue(CLRConfig::EXTERNAL_KeywordsFilter, &enabledKeywords);
+
+         if (!enabledKeywords)
+         {
+             return 0;
+         }
+
+         ULONGLONG result = 0;
+         LPCWSTR token = wcstok(enabledKeywords, Delimiters);
+         while (token != nullptr)
+         {
+             auto token_len = wcslen(token);
+             if (token_len != 0)
+             {
+                for (auto i = 0; i < CLR_KEYWORDS_COUNT; i++)
+                {
+                    if (wcslen(ALL_CLR_KEYWORDS[i]) == token_len && _wcsicmp(ALL_CLR_KEYWORDS[i], token) == 0)
+                    {
+                        result |= (1ULL << i);
+                    }
+                }
+             }
+             token = wcstok(nullptr, Delimiters);
+         }
+         return result;
+     }
 };
 
 #endif //defined(FEATURE_EVENT_TRACE)
