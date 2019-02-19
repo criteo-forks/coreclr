@@ -258,7 +258,8 @@ class XplatEventLogger
 
          if (!enabledKeywords)
          {
-             return 0;
+             // set default behavior: all keywords activated
+             return (ULONGLONG)(-1);
          }
 
          ULONGLONG result = 0;
