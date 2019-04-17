@@ -246,6 +246,17 @@ public:
 #include "clrconfig.h"
 #include "clrproviders.h"
 
+enum CallbackProviderIndex : short;
+
+extern "C" {
+    VOID EtwCallbackCommon(
+    CallbackProviderIndex ProviderIndex,
+    ULONG ControlCode,
+    UCHAR Level,
+    ULONGLONG MatchAnyKeyword,
+    PVOID pFilterData);
+}
+
 class XplatEventLoggerConfiguration
 {
 public:
@@ -307,7 +318,11 @@ private:
     {
         if (configString == nullptr || *configString == W('\0'))
         {
-            _provider = W("*");
+            auto provider = new WCHAR[2];
+            memset(provider, 0, 2 * sizeof(WCHAR));
+            provider[0] = W('*');
+            _provider = provider;
+
             _enabledKeywords = (ULONGLONG)(-1);
             _level  = TRACE_LEVEL_VERBOSE;
             return;
@@ -325,7 +340,7 @@ private:
         _enabledKeywords = ParseEnabledKeywordsMask(keywordsComponent);
 
         auto levelComponent = GetNextComponentString(keywordsComponent.End + 1);
-        _level = ParseEnabledKeywordsMask(levelComponent);
+        _level = ParseLevel(levelComponent);
 
         _isValid = true;
     }
@@ -490,6 +505,19 @@ private:
         return initialize;
     }
 
+    static void InitializeEELoggingMechanism(XplatEventLoggerConfiguration const & config)
+    {
+        if (_wcsicmp(config.GetProviderName(), W("Microsoft-Windows-DotNETRuntime")) == 0 && wcslen(config.GetProviderName()) == wcslen(W("Microsoft-Windows-DotNETRuntime")))
+	{
+	    EtwCallbackCommon((CallbackProviderIndex)0, (ULONG)true, config.GetLevel(), config.GetEnabledKeywordsMask(), nullptr);
+	}
+	else
+        {
+            fprintf(stdout, "Unable to initialize EE. Unknown provider: %ls\n", config.GetProviderName());
+	    fflush(stdout);
+        }
+    }
+
     static bool InitializeLogger()
     {
         if (!IsEventLoggingEnabled())
@@ -504,6 +532,10 @@ private:
         configuration.Initialize(xplatEventConfig);
 
         XplatEventLoggerController::Initialize(configuration);
+	if (configuration.IsValid())
+	{
+            InitializeEELoggingMechanism(configuration);
+	}
         return configuration.IsValid();
     }
 };
