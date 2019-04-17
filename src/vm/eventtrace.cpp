@@ -4182,7 +4182,7 @@ void InitializeEventTracing()
 
 // CallbackProviderIndex provides a quick identification of which provider triggered the
 // ETW callback.
-enum CallbackProviderIndex
+enum CallbackProviderIndex : short
 {
     DotNETRuntime = 0,
     DotNETRuntimeRundown = 1,
