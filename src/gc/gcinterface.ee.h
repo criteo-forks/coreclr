@@ -97,6 +97,12 @@ public:
         uint32_t memoryPressure) = 0;
 
     virtual
+    void FireGCPhaseBegin(uint32_t gcCount, uint32_t heap, int32_t phase) = 0;
+
+    virtual
+    void FireGCPhaseEnd(uint32_t gcCount, uint32_t heap, int32_t phase, uint64_t duration) = 0;
+
+    virtual
     void FireGCAllocationTick_V1(uint32_t allocationAmount, uint32_t allocationKind) = 0;
 
     virtual

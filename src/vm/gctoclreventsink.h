@@ -42,6 +42,8 @@ public:
                                     uint32_t globalMechanisms,
                                     uint32_t pauseMode,
                                     uint32_t memoryPressure);
+    void FireGCPhaseBegin(uint32_t gcCount, uint32_t heap, int32_t phase);
+    void FireGCPhaseEnd(uint32_t gcCount, uint32_t heap, int32_t phase, uint64_t duration);
     void FireGCAllocationTick_V1(uint32_t allocationAmount, uint32_t allocationKind);
     void FireGCAllocationTick_V3(uint64_t allocationAmount, uint32_t allocationKind, uint32_t heapIndex, void* objectAddress);
     void FirePinObjectAtGCTime(void* object, uint8_t** ppObject);

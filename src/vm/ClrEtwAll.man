@@ -125,6 +125,8 @@
                             <opcode name="GCJoin" message="$(string.RuntimePublisher.GCJoinOpcodeMessage)" symbol="CLR_GC_JOIN_OPCODE" value="203"> </opcode>
                             <opcode name="GCPerHeapHistory" message="$(string.RuntimePublisher.GCPerHeapHistoryOpcodeMessage)" symbol="CLR_GC_GCPERHEAPHISTORY_OPCODE" value="204"> </opcode>
                             <opcode name="GCGlobalHeapHistory" message="$(string.RuntimePublisher.GCGlobalHeapHistoryOpcodeMessage)" symbol="CLR_GC_GCGLOBALHEAPHISTORY_OPCODE" value="205"> </opcode>
+                            <opcode name="GCPhaseBegin" message="$(string.RuntimePublisher.GCPhaseBeginOpcodeMessage)" symbol="CLR_GC_GCPHASEBEGIN_OPCODE" value="206"> </opcode>
+                            <opcode name="GCPhaseEnd" message="$(string.RuntimePublisher.GCPhaseEndOpcodeMessage)" symbol="CLR_GC_GCPHASEEND_OPCODE" value="207"> </opcode>
                         </opcodes>
                     </task>
 
@@ -1127,6 +1129,40 @@
                                 <PauseMode> %8 </PauseMode>
                                 <MemoryPressure> %9 </MemoryPressure>
                             </GCGlobalHeap_V2>
+                        </UserData>
+                    </template>
+
+                    <template tid="GCPhaseBegin">
+                        <data name="Count" inType="win:UInt32" outType="xs:unsignedInt" />
+                        <data name="Heap" inType="win:UInt32" />
+                        <data name="Phase" inType="win:Int32" />
+                        <data name="ClrInstanceID" inType="win:UInt16" />
+
+                        <UserData>
+                            <GCPhaseBegin xmlns="myNs">
+                                <Count> %1 </Count>
+                                <Heap> %2 </Heap>
+                                <Phase> %3 </Phase>
+                                <ClrInstanceID> %4 </ClrInstanceID>
+                            </GCPhaseBegin>
+                        </UserData>
+                    </template>
+
+                    <template tid="GCPhaseEnd">
+                        <data name="Count" inType="win:UInt32" outType="xs:unsignedInt" />
+                        <data name="Heap" inType="win:UInt32" />
+                        <data name="Phase" inType="win:Int32" />
+                        <data name="Duration" inType="win:UInt64" />
+                        <data name="ClrInstanceID" inType="win:UInt16" />
+
+                        <UserData>
+                            <GCPhaseEnd xmlns="myNs">
+                                <Count> %1 </Count>
+                                <Heap> %2 </Heap>
+                                <Phase> %3 </Phase>
+                                <Duration> %4 </Duration>
+                                <ClrInstanceID> %5 </ClrInstanceID>
+                            </GCPhaseEnd>
                         </UserData>
                     </template>
 
@@ -3264,6 +3300,16 @@
                            keywords ="GCKeyword"  opcode="GCGlobalHeapHistory"
                            task="GarbageCollection"
                            symbol="GCGlobalHeapHistory_V2" message="$(string.RuntimePublisher.GCGlobalHeap_V2EventMessage)"/>
+
+                    <event value="206" version="0" level="win:Informational"  template="GCPhaseBegin"
+                           keywords ="GCKeyword"  opcode="GCPhaseBegin"
+                           task="GarbageCollection"
+                           symbol="GCPhaseBegin" message="$(string.RuntimePublisher.GCPhaseBeginEventMessage)"/>
+
+                    <event value="207" version="0" level="win:Informational"  template="GCPhaseEnd"
+                           keywords ="GCKeyword"  opcode="GCPhaseEnd"
+                           task="GarbageCollection"
+                           symbol="GCPhaseEnd" message="$(string.RuntimePublisher.GCPhaseEndEventMessage)"/>
 
                     <!-- CLR Debugger events 240-249 -->
                     <event value="240" version="0" level="win:Informational"
@@ -6369,6 +6415,8 @@
                 <string id="RuntimePublisher.GCJoin_V2EventMessage" value="Heap=%1;%nJoinTime=%2;%nJoinType=%3;%nClrInstanceID=%4;%nJoinID=%5"/>
                 <string id="RuntimePublisher.GCPerHeapHistory_V3EventMessage" value="ClrInstanceID=%1;%nFreeListAllocated=%2;%nFreeListRejected=%3;%nEndOfSegAllocated=%4;%nCondemnedAllocated=%5;%nPinnedAllocated=%6;%nPinnedAllocatedAdvance=%7;%RunningFreeListEfficiency=%8;%nCondemnReasons0=%9;%nCondemnReasons1=%10;%nCompactMechanisms=%11;%nExpandMechanisms=%12;%nHeapIndex=%13;%nExtraGen0Commit=%14;%nCount=%15"/>
                 <string id="RuntimePublisher.GCGlobalHeap_V2EventMessage" value="FinalYoungestDesired=%1;%nNumHeaps=%2;%nCondemnedGeneration=%3;%nGen0ReductionCountD=%4;%nReason=%5;%nGlobalMechanisms=%6;%nClrInstanceID=%7;%nPauseMode=%8;%nMemoryPressure=%9"/>
+                <string id="RuntimePublisher.GCPhaseBeginEventMessage" value="Count=%1;%nHeap=%2;%nPhase=%3;%nClrInstanceID=%4"/>
+                <string id="RuntimePublisher.GCPhaseEndEventMessage" value="Count=%1;%nHeap=%2;%nPhase=%3;%nDuration=%4;%nClrInstanceID=%5"/>
                 <string id="RuntimePublisher.FinalizeObjectEventMessage" value="TypeID=%1;%nObjectID=%2;%nClrInstanceID=%3" />
                 <string id="RuntimePublisher.GCTriggeredEventMessage" value="Reason=%1" />
                 <string id="RuntimePublisher.PinObjectAtGCTimeEventMessage" value="HandleID=%1;%nObjectID=%2;%nObjectSize=%3;%nTypeName=%4;%n;%nClrInstanceID=%5" />
@@ -7018,6 +7066,8 @@
                 <string id="RuntimePublisher.PinObjectAtGCTimeOpcodeMessage" value="PinObjectAtGCTime" />
                 <string id="RuntimePublisher.IncreaseMemoryPressureOpcodeMessage" value="IncreaseMemoryPressure" />
                 <string id="RuntimePublisher.DecreaseMemoryPressureOpcodeMessage" value="DecreaseMemoryPressure" />
+                <string id="RuntimePublisher.GCPhaseBeginOpcodeMessage" value="GCPhaseBegin" />
+                <string id="RuntimePublisher.GCPhaseEndOpcodeMessage" value="GCPhaseEnd" />
 
                 <string id="RuntimePublisher.EnqueueOpcodeMessage" value="Enqueue" />
                 <string id="RuntimePublisher.DequeueOpcodeMessage" value="Dequeue" />

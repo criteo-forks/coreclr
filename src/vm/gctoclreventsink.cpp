@@ -136,6 +136,20 @@ void GCToCLREventSink::FireGCGlobalHeapHistory_V2(uint64_t finalYoungestDesired,
         globalMechanisms, GetClrInstanceId(), pauseMode, memoryPressure);
 }
 
+void GCToCLREventSink::FireGCPhaseBegin(uint32_t gcCount, uint32_t heap, int32_t phase)
+{
+    LIMITED_METHOD_CONTRACT;
+
+    FireEtwGCPhaseBegin(gcCount, heap, phase, GetClrInstanceId());
+}
+void GCToCLREventSink::FireGCPhaseEnd(uint32_t gcCount, uint32_t heap, int32_t phase, uint64_t duration)
+{
+    LIMITED_METHOD_CONTRACT;
+
+    FireEtwGCPhaseEnd(gcCount, heap, phase, duration, GetClrInstanceId());
+}
+
+
 void GCToCLREventSink::FireGCAllocationTick_V1(uint32_t allocationAmount, uint32_t allocationKind)
 {
     LIMITED_METHOD_CONTRACT;

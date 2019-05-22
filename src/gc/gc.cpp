@@ -207,6 +207,7 @@ size_t GetHighPrecisionTimeStamp()
 }
 #endif
 
+
 #ifdef GC_STATS
 // There is a current and a prior copy of the statistics.  This allows us to display deltas per reporting
 // interval, as well as running totals.  The 'min' and 'max' values require special treatment.  They are
@@ -1550,6 +1551,15 @@ __asm   pop     EDX
 #ifdef TIME_GC
 int mark_time, plan_time, sweep_time, reloc_time, compact_time;
 #endif //TIME_GC
+
+enum gc_phase : int
+{   // can't use "mark" as symbol name because already use as type
+    mark_phase = 0,
+    plan_phase = 1,
+    reloc_phase = 2,
+    compact_phase = 3,
+    sweep_phase = 4
+};
 
 #ifndef MULTIPLE_HEAPS
 
@@ -19832,6 +19842,8 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
     unsigned finish;
     start = GetCycleCount32();
 #endif //TIME_GC
+    size_t startTime = GetHighPrecisionTimeStamp();
+    FIRE_EVENT(GCPhaseBegin, (uint32_t)gc_heap::settings.gc_index, (uint32_t)heap_number, gc_phase::mark_phase);
 
     int gen_to_init = condemned_gen_number;
     if (condemned_gen_number == max_generation)
@@ -20323,6 +20335,9 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
         finish = GetCycleCount32();
         mark_time = finish - start;
 #endif //TIME_GC
+    size_t endTime = GetHighPrecisionTimeStamp();
+    size_t elapsedTime = endTime - startTime;
+    FIRE_EVENT(GCPhaseEnd, (uint32_t)gc_heap::settings.gc_index, (uint32_t)heap_number, gc_phase::mark_phase, elapsedTime);
 
     dprintf(2,("---- End of mark phase ----"));
 }
@@ -21786,6 +21801,9 @@ void gc_heap::plan_phase (int condemned_gen_number)
     unsigned finish;
     start = GetCycleCount32();
 #endif //TIME_GC
+    size_t startTime = GetHighPrecisionTimeStamp();
+    FIRE_EVENT(GCPhaseBegin, (uint32_t)gc_heap::settings.gc_index, (uint32_t)heap_number, gc_phase::plan_phase);
+
 
     dprintf (2,("---- Plan Phase ---- Condemned generation %d, promotion: %d",
                 condemned_gen_number, settings.promotion ? 1 : 0));
@@ -22744,6 +22762,9 @@ void gc_heap::plan_phase (int condemned_gen_number)
     finish = GetCycleCount32();
     plan_time = finish - start;
 #endif //TIME_GC
+    size_t endTime = GetHighPrecisionTimeStamp();
+    size_t elapsedTime = endTime - startTime;
+    FIRE_EVENT(GCPhaseEnd, (uint32_t)gc_heap::settings.gc_index, (uint32_t)heap_number, gc_phase::plan_phase, elapsedTime);
 
     // We may update write barrier code.  We assume here EE has been suspended if we are on a GC thread.
     assert(IsGCInProgress());
@@ -23457,6 +23478,8 @@ void gc_heap::make_free_lists (int condemned_gen_number)
     unsigned finish;
     start = GetCycleCount32();
 #endif //TIME_GC
+    size_t startTime = GetHighPrecisionTimeStamp();
+    FIRE_EVENT(GCPhaseBegin, (uint32_t)gc_heap::settings.gc_index, (uint32_t)heap_number, gc_phase::sweep_phase);
 
     //Promotion has to happen in sweep case.
     assert (settings.promotion);
@@ -23577,6 +23600,9 @@ void gc_heap::make_free_lists (int condemned_gen_number)
     finish = GetCycleCount32();
     sweep_time = finish - start;
 #endif //TIME_GC
+    size_t endTime = GetHighPrecisionTimeStamp();
+    size_t elapsedTime = endTime - startTime;
+    FIRE_EVENT(GCPhaseEnd, (uint32_t)gc_heap::settings.gc_index, (uint32_t)heap_number, gc_phase::sweep_phase, elapsedTime);
 }
 
 void gc_heap::make_free_list_in_brick (uint8_t* tree, make_free_args* args)
@@ -24731,6 +24757,8 @@ void gc_heap::relocate_phase (int condemned_gen_number,
         unsigned finish;
         start = GetCycleCount32();
 #endif //TIME_GC
+    size_t startTime = GetHighPrecisionTimeStamp();
+    FIRE_EVENT(GCPhaseBegin, (uint32_t)gc_heap::settings.gc_index, (uint32_t)heap_number, gc_phase::reloc_phase);
 
 //  %type%  category = quote (relocate);
     dprintf (2,("---- Relocate phase -----"));
@@ -24820,6 +24848,9 @@ void gc_heap::relocate_phase (int condemned_gen_number,
         finish = GetCycleCount32();
         reloc_time = finish - start;
 #endif //TIME_GC
+    size_t endTime = GetHighPrecisionTimeStamp();
+    size_t elapsedTime = endTime - startTime;
+    FIRE_EVENT(GCPhaseEnd, (uint32_t)gc_heap::settings.gc_index, (uint32_t)heap_number, gc_phase::reloc_phase, elapsedTime);
 
     dprintf(2,( "---- End of Relocate phase ----"));
 }
@@ -25182,6 +25213,9 @@ void gc_heap::compact_phase (int condemned_gen_number,
         unsigned finish;
         start = GetCycleCount32();
 #endif //TIME_GC
+    size_t startTime = GetHighPrecisionTimeStamp();
+    FIRE_EVENT(GCPhaseBegin, (uint32_t)gc_heap::settings.gc_index, (uint32_t)heap_number, gc_phase::compact_phase);
+
     generation*   condemned_gen = generation_of (condemned_gen_number);
     uint8_t*  start_address = first_condemned_address;
     size_t   current_brick = brick_of (start_address);
@@ -25304,6 +25338,9 @@ void gc_heap::compact_phase (int condemned_gen_number,
     finish = GetCycleCount32();
     compact_time = finish - start;
 #endif //TIME_GC
+    size_t endTime = GetHighPrecisionTimeStamp();
+    size_t elapsedTime = endTime - startTime;
+    FIRE_EVENT(GCPhaseEnd, (uint32_t)gc_heap::settings.gc_index, (uint32_t)heap_number, gc_phase::compact_phase, elapsedTime);
 
     concurrent_print_time_delta ("compact end");
 
