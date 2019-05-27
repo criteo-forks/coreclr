@@ -47,6 +47,7 @@ SET_DEFAULT_DEBUG_CHANNEL(THREAD); // some headers have code with asserts, so do
 
 #include <signal.h>
 #include <pthread.h>
+#include <sys/sysinfo.h>
 #if HAVE_PTHREAD_NP_H
 #include <pthread_np.h>
 #endif
@@ -559,6 +560,9 @@ CorUnix::InternalCreateThread(
     int iError = 0;
     size_t alignedStackSize;
 
+    int procCount = 0;
+    cpu_set_t mask;
+
     if (0 != terminator)
     {
         //
@@ -755,6 +759,15 @@ CorUnix::InternalCreateThread(
 #ifdef FEATURE_PAL_SXS
     _ASSERT_MSG(pNewThread->IsInPal(), "New threads we're about to spawn should always be in the PAL.\n");
 #endif // FEATURE_PAL_SXS
+
+    procCount = get_nprocs();
+    CPU_ZERO(&mask);
+    for (int i = 0; i < procCount; i++)
+    {
+        CPU_SET(i, &mask);
+    }
+    pthread_attr_setaffinity_np(&pthreadAttr, sizeof(cpu_set_t), &mask);
+    
     iError = pthread_create(&pthread, &pthreadAttr, CPalThread::ThreadEntry, pNewThread);
 
 #if PTHREAD_CREATE_MODIFIES_ERRNO
