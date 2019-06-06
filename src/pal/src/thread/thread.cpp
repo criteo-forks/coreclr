@@ -559,10 +559,8 @@ CorUnix::InternalCreateThread(
     int iError = 0;
     size_t alignedStackSize;
 #if HAVE_PTHREAD_ATTR_SETAFFINITY_NP && HAVE_SCHED_GETAFFINITY
-    {
-        cpu_set_t cpuSet;
-        int st;
-    }
+    cpu_set_t cpuSet;
+    int st;
 #endif // HAVE_PTHREAD_ATTR_SETAFFINITY_NP && HAVE_SCHED_GETAFFINITY
 
     if (0 != terminator)
