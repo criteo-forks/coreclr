@@ -325,6 +325,7 @@ private:
 
             _enabledKeywords = (ULONGLONG)(-1);
             _level  = TRACE_LEVEL_VERBOSE;
+            _isValid = true;
             return;
         }
 
@@ -488,7 +489,7 @@ public:
 
         if ((level <= providerCtx.Level) || (providerCtx.Level == 0))
         {
-            if ((keyword == 0) || ((keyword & providerCtx.EnabledKeywordsBitmask) == keyword))
+            if ((keyword == 0) || ((keyword & providerCtx.EnabledKeywordsBitmask) != 0))
             {
                 return true;
             }
