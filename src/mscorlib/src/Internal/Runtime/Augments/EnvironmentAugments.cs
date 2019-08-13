@@ -19,7 +19,7 @@ namespace Internal.Runtime.Augments
         public static string[] GetCommandLineArgs() => Environment.GetCommandLineArgs();
         public static bool HasShutdownStarted => Environment.HasShutdownStarted;
         public static int TickCount => Environment.TickCount;
-        public static int TickCount64 => Environment.TickCount64;
+        public static long TickCount64 => Environment.TickCount64;
         public static string GetEnvironmentVariable(string variable) => Environment.GetEnvironmentVariable(variable);
         public static string GetEnvironmentVariable(string variable, EnvironmentVariableTarget target) => Environment.GetEnvironmentVariable(variable, target);
         public static IEnumerable<KeyValuePair<string, string>> EnumerateEnvironmentVariables() => Environment.EnumerateEnvironmentVariables();
