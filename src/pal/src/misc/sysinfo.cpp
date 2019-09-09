@@ -96,6 +96,8 @@ SET_DEFAULT_DEBUG_CHANNEL(MISC);
 #endif
 #endif // __APPLE__
 
+#define PROC_MEMINFO_FILENAME "/proc/meminfo"
+
 DWORD
 PALAPI
 PAL_GetTotalCpuCount()
@@ -239,6 +241,57 @@ GetSystemInfo(
     PERF_EXIT(GetSystemInfo);
 }
 
+#define FATAL_AVAILABLE_MEMORY_RETRIEVAL_EXCEPTION ((DWORD) 0x04242424)
+#define MAX_CHAR 256 // should be enough for one line of meminfo file
+
+long long
+GetAvailableMemory()
+{
+    FILE* meminfoFile = fopen(PROC_MEMINFO_FILENAME, "r");
+
+    if (meminfoFile != nullptr)
+    {
+        size_t lineLen = 0;
+        char* line = nullptr;
+        while (getline(&line, &lineLen, meminfoFile) != -1)
+        {
+                if (strncmp(line, "MemAvailable:", 12) == 0)
+                {
+                        char* ptr = strchr(line, ':');
+                        if (!ptr)
+                                break;
+
+                        char* endptr;
+                        errno = 0;
+                        auto memAvailableValue = strtoll(ptr + 1, &endptr, 10); // +1 to move passed the ':'
+                        if (errno != 0)
+                                break;
+
+                        ptr = endptr + 1; // move passed the whitespace
+                        size_t multiplier = 1;
+                        switch (*ptr)
+                        {
+                                case 'g':
+                                case 'G': multiplier = 1024 * 1024 * 1024;
+                                case 'm':
+                                case 'M': multiplier = 1024 * 1024;
+                                case 'k':
+                                case 'K': multiplier = 1024;
+                        }
+
+                        fclose(meminfoFile);
+                        return memAvailableValue * multiplier;
+                }
+        }
+        free(line);
+        fclose(meminfoFile);
+        meminfoFile = nullptr;
+    }
+
+    fprintf(stderr, "Unable to retrieve available memory from /proc/meminfo");
+    ExitProcess(EXIT_FAILURE);
+}
+
 /*++
 Function:
   GlobalMemoryStatusEx
@@ -365,7 +418,7 @@ GlobalMemoryStatusEx(
     if (lpBuffer->ullTotalPhys > 0)
     {
 #ifndef __APPLE__
-        lpBuffer->ullAvailPhys = sysconf(SYSCONF_PAGES) * sysconf(_SC_PAGE_SIZE);
+        lpBuffer->ullAvailPhys = GetAvailableMemory();
         INT64 used_memory = lpBuffer->ullTotalPhys - lpBuffer->ullAvailPhys;
         lpBuffer->dwMemoryLoad = (DWORD)((used_memory * 100) / lpBuffer->ullTotalPhys);
 #else
