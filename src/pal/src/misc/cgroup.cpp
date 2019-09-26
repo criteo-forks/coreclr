@@ -24,7 +24,7 @@ SET_DEFAULT_DEBUG_CHANNEL(MISC);
 #define PROC_CGROUP_FILENAME "/proc/self/cgroup"
 #define PROC_STATM_FILENAME "/proc/self/statm"
 #define MEM_LIMIT_FILENAME "/memory.limit_in_bytes"
-#define MEM_USAGE_FILENAME "/memory.usage_in_bytes"
+#define MEM_STAT_FILENAME "/memory.stat"
 #define CFS_QUOTA_FILENAME "/cpu.cfs_quota_us"
 #define CFS_PERIOD_FILENAME "/cpu.cfs_period_us"
 class CGroup
@@ -67,22 +67,43 @@ public:
 
     static bool GetPhysicalMemoryUsage(size_t *val)
     {
-        char *mem_usage_filename = nullptr;
+        char *mem_stat_filename = nullptr;
         bool result = false;
 
         if (s_memory_cgroup_path == nullptr)
             return result;
 
         size_t len = strlen(s_memory_cgroup_path);
-        len += strlen(MEM_USAGE_FILENAME);
-        mem_usage_filename = (char*)malloc(len+1);
-        if (mem_usage_filename == nullptr)
+        len += strlen(MEM_STAT_FILENAME);
+        mem_stat_filename = (char*)PAL_malloc(len+1);
+        if (mem_stat_filename == nullptr)
             return result;
 
-        strcpy(mem_usage_filename, s_memory_cgroup_path);
-        strcat(mem_usage_filename, MEM_USAGE_FILENAME);
-        result = ReadMemoryValueFromFile(mem_usage_filename, val);
-        free(mem_usage_filename);
+        strcpy(mem_stat_filename, s_memory_cgroup_path);
+        strcat(mem_stat_filename, MEM_STAT_FILENAME);
+
+        FILE* file = fopen(mem_stat_filename, "r");
+        if (file != nullptr)
+        {
+            char* line = nullptr;
+            size_t linelen;
+            while (getline(&line, &linelen, file) != -1)
+            {
+                size_t available;
+                int fieldsParsed = sscanf_s(line, "rss %zu" , &available);
+                if (fieldsParsed >= 1)
+                {
+                    *val = available;
+                    result = true;
+                    break;
+                }
+            }
+            free(line);
+            fclose(file);
+        }
+
+        PAL_free(mem_stat_filename);
+
         return result;
     }
 
